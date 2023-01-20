@@ -1,0 +1,15 @@
+type: hyperskill
+title: HyperDarts
+language: English
+summary: "<p>You and your friends like darts. But it's a holiday, and you can't go\
+  \ to your favorite pub. Why not organize an online Darts tournament and broadcast\
+  \ it (via Zoom, for example) to show the throws. For centralized scoring and statistics,\
+  \ you've decided to create a web application, HyperDarts, that can track them for\
+  \ players. In this project, we will implement the service backend with the Spring\
+  \ Boot framework.</p><br/><br/>Learn more at <a href=\"https://hyperskill.org/projects/228?utm_source=ide&utm_medium=ide&utm_campaign=ide&utm_content=project-card\"\
+  >https://hyperskill.org/projects/228</a>"
+programming_language: Java
+programming_language_version: 11
+content:
+- HyperDarts
+mode: Study

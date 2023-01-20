@@ -1,0 +1,54 @@
+<h5 id="description">Description</h5>
+<p>Before starting this project, it is necessary to determine the requirements for the web application and design. First thing, service users must be able to do the following things via API access:</p>
+<ul>
+<li>Create a new game of darts on the server. The game can be closed (invitation-only) or open to everyone (any player can connect, including the creator);</li>
+<li>Get the information about current games available for connection;</li>
+<li>Connect to open or closed games;</li>
+<li>Get the current status of the game and statistics;</li>
+<li>Transmit the data about your throws.</li>
+</ul>
+<p>The logic of the service must carry out the following (internal logic of the service):</p>
+<ul>
+<li>Authentication and authorization of users;</li>
+<li>Game management: creation, status definition, completion;</li>
+<li>Database maintenance;</li>
+<li>Validation of transferred player data as per the game rules;</li>
+<li>Scoring, ordering, setting of transition speed, result output;</li>
+<li>In-game statistics management: average number of points per turn, number of moves per game, game leaders;</li>
+<li>Auxilliary functions: calculation of possible endings, and more.</li>
+</ul>
+<h5 id="objectives">Objectives</h5>
+<p>In this stage, our goal is to run a Spring Boot web application and create several endpoints.</p>
+<ul>
+<li>Create and run a Spring Boot application on the <code class="java">28852</code> port.</li>
+<li>Implement the following API structure for the game logic:</li>
+</ul>
+<ol>
+<li><code class="java">POST api/game/create</code> to create a game;</li>
+<li><code class="java">GET api/game/list</code> to get the list of current games on the server;</li>
+<li><code class="java">GET api/game/join</code> to join to a game;</li>
+<li><code class="java">GET api/game/status</code> to get the game status;</li>
+<li><code class="java">POST api/game/throws</code> to send the information about the player's throws.</li>
+</ol>
+<p>All API's must respond with the status <code class="java">200 OK</code> code and the next JSON:</p>
+<pre><code class="java">{
+   "status": "Under construction!"
+}</code></pre>
+<h5 id="examples">Examples</h5>
+<p><strong>Example 1: </strong><em>a POST request for api/game/create</em></p>
+<p><em>Request body:</em></p>
+<pre><code class="java">{}</code></pre>
+<p><em>Response: </em><code class="java">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="java">{
+   "status": "Under construction!"
+}</code></pre>
+<p><strong>Example 2:</strong> <em>a GET request for api/game/status</em></p>
+<p><em>Request body:</em></p>
+<pre><code class="java">{}</code></pre>
+<p><em>Response: </em><code class="java">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="java">{
+   "status": "Under construction!"
+}</code></pre>
+<p> </p>

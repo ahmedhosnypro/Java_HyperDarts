@@ -1,0 +1,155 @@
+<h5 id="description">Description</h5>
+<p>As of now, we don't have an API that can register users in our application. Instead, we will use a different scenario. It's a good idea to use the <strong>OAuth mechanism</strong>. For more information, you can refer to <a href="https://www.youtube.com/watch?v=CPbvxxslDTU" rel="noopener noreferrer nofollow" target="_blank">OAuth 2.0: An Overview</a> by InterSystems Learning Services on YouTube. We are not going to store user accounts and passwords in our app. Instead, we delegate all security issues to a third party trusted by all participants in the process, for example, Google.</p>
+<p>We won't be using real accounts of an authorization provider; we ask you to implement your provider. Let's write an emulator!</p>
+<p>Some theory first. OAuth defines four roles:</p>
+<ul>
+<li>Resource owner. This role is assigned in the tests;</li>
+<li>Resource server. This is a HyperDarts service;</li>
+<li>Authorization server. This is an emulator;</li>
+<li>Client. This role is assigned in the tests.</li>
+</ul>
+<p>For more details, please, take a look at the <a href="https://www.oauth.com/oauth2-servers/definitions/" rel="noopener noreferrer nofollow" target="_blank">Terminology Reference</a> on the OAuth official website.</p>
+<p>OAuth offers <a href="https://www.ibm.com/docs/ro/api-connect/5.0.x?topic=endpoint-tutorial-securing-api-by-using-oauth-20" rel="noopener noreferrer nofollow" target="_blank">six schemes</a> for implementation. Various articles and examples on the Internet usually advise the most secure one – the <strong>Access code flow</strong> scheme. For simplicity and convenience of testing, we need to implement the <strong>Password flow</strong> scheme. In this scheme, users entrust their passwords to the client application. The client application then interacts with the authorization provider. Let's agree that users trust the client application that avoids storing their passwords; it only obtains an access token.<br/>
+</p><div class="alert alert-warning">We do not encourage this scheme for real projects; use it only for training. Although, it can be used for first-party apps — for example, Twitter. More information on this — <a href="https://oauth.net/2/grant-types/password/" rel="noopener noreferrer nofollow" target="_blank">OAuth 2.0 Password Grant</a></div><p></p>
+<p><img alt="" height="422" name="image.png" src="https://ucarecdn.com/069c0a08-cbfe-4ff8-b0ef-6162742e48ba/" width="645"/></p>
+<p>Let's start with the authorization server. The implementation of OAuth in Spring Security changes regularly, so consider an example for the following version:</p>
+<pre><code class="language-java">implementation 'org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.1.0.RELEASE'</code></pre>
+<p>It is quite simple to launch an authorization server. You will need to create only one class for the server:</p>
+<pre><code class="language-java">import ...
+
+@Configuration
+@EnableAuthorizationServer
+public class OAuthConfiguration extends AuthorizationServerConfigurerAdapter {
+
+    private final AuthenticationManager authenticationManager;
+    private String clientId;
+    private String clientSecret;
+    private String jwtSigningKey;
+    private int accessTokenValiditySeconds;
+    private String[] authorizedGrantTypes;
+    private int refreshTokenValiditySeconds;
+
+    public OAuthConfiguration(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        this.authenticationManager =
+                authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Override
+    public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception
+    {
+        oauthServer.checkTokenAccess("permitAll()");
+    }
+
+    @Override
+    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+        clients.inMemory()
+                .withClient(clientId)
+                .secret("{noop}" + clientSecret)
+                .accessTokenValiditySeconds(accessTokenValiditySeconds)
+                .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
+                .authorizedGrantTypes(authorizedGrantTypes)
+                .scopes("read")
+                .resourceIds("api");
+    }
+
+    @Override
+    public void configure(final AuthorizationServerEndpointsConfigurer endpoints) {
+        endpoints
+                .accessTokenConverter(accessTokenConverter())
+                .authenticationManager(authenticationManager);
+    }
+
+    @Bean
+    JwtAccessTokenConverter accessTokenConverter() {
+        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        converter.setSigningKey(jwtSigningKey);
+        return converter;
+    }
+
+
+}</code></pre>
+<p>Another class for users verification: <code class="language-java">@bean AuthenticationManager</code>:</p>
+<pre><code class="language-java">@EnableWebSecurity
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+    private String user = "user";
+    private String password = "password";
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication()
+                .withUser(user)
+                .password("{noop}" + password)
+                .roles("USER");
+    }
+
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
+}</code></pre>
+<h5 id="objectives">Objectives</h5>
+<ul>
+<li>Add the following Spring Security dependencies to the project:</li>
+</ul>
+<pre><code class="language-java">implementation 'org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.1.0.RELEASE'</code></pre>
+<ul>
+<li>Implement the authorization server and configure it as follows:</li>
+</ul>
+<pre><code class="language-java">scope = "read", "write", "update"
+Client Id = "hyperdarts"
+Client Secret = "secret"
+Access Token Validitity Seconds = 3600
+Authorized Grant Types = "password", "authorization_code", "refresh_token"
+Refresh Token Validity Seconds = 3600
+resource id = "api"
+Signing Key = "-----BEGIN RSA PRIVATE KEY-----MIICWwIBAAKBgQDQ+7yKlJGuvYtf1soMsJjkQJGAXe90QAxqppycf+3JT5ehnvvWtwS8ef+UsqrNa5Rc9tyyHjP7ZXRN145SlRTZzc0d03Ez10OfAEVdhGACgRxS5s+GZVtdJuVcje3Luq3VIvZ8mV/P4eRcV3yVKDwQEenMuL6Mh6JLH48KxgbNRQIDAQABAoGAd5k5w41W+kvbcZO4uh5uwWH6Yx5fJYZqFLcZNa845Fa6jnIv6id/fGXNUMoXWcxRcgqNLxp94Uekkc/k0XokHaEac21ReDDVmufgwujoUHVacDEWWkkool0FVBirmlWJhM8Kt0Tyr7GmUilktekTt2QC/pL0LJCbo8Exmg3DnFkCQQDpb89ftQ35zBqs+BAl9zCa3cxYGGHlBLKLPKk0MZeCSQ8iY37fwTPlpY/fmNo/rQTDLDemJ/CYNxLOFyrPBVfDAkEA5S7ZFMH+c8D2O+73p82m0ZH96afYC2kA0UFoitAntUL/hjxfWMPU5QnK5n+2gCTHynVSogCPGQovZfoHsax+VwJAH3Zba9naPV2+BqwUeRl86pKUVRdMMnLUoaGWaJt6gSvZp1fjpMLEfOI4pvlSCR0HtEqEYZemfM2HclF7CpX8wwJARt7Hzj13HABtpHbvKnrTvTayGBEJI+4ijJL3awWXYdwH/FCrA137daAjmEeh/dph1d+V3/bgSVP2+EfrHSxEHQJALeyliJOUCrXM6hqksKuJlSOxArd3UiQe9t/q6woGTC3Y2tz7Yw5CZkDPqHchmGv7+ZZv5dh2EHtxsM1SXUFVfQ==-----END RSA PRIVATE KEY-----"</code></pre>
+<p>Note that parentheses mean a string parameter. The tests will check the fields in the access token and the digital signature of the token.</p>
+<ul>
+<li>Implement <code class="language-java">UserStore</code> and <code class="language-java">AuthenticationManager</code> <code class="language-java">@Bean</code> for the authorization server with the following users:</li>
+</ul>
+<pre><code class="language-java">User 1:
+    login = "ivanhoe@acme.com"
+    password = "oMoa3VvqnLxW"
+    role = "GAMER"
+
+User 2:
+    login = "robinhood@acme.com"
+    password = "ai0y9bMvyF6G"
+    role = "GAMER"
+User 3:
+    login = "wilhelmtell@acme.com"
+    password = "bv0y9bMvyF7E"
+    role = "GAMER"
+User 4:
+    login = "admin@acme.com"
+    password = "zy0y3bMvyA6T"
+    role = "ADMIN"</code></pre>
+<h5 id="examples">Examples</h5>
+<p><strong>Example 1: </strong><em>a POST request for /oauth/token with wrong client authentication details (client ID or client secret)</em></p>
+<p style="text-align: center;"><img alt="" height="314" name="image.png" src="https://ucarecdn.com/fafbb52f-1237-45f3-8581-407dbcde8fdf/" width="1311"/></p>
+<p><em>Response: </em><code class="language-java">401 Unauthorized</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-java">[]</code></pre>
+<p><strong>Example 2:</strong> <em>a POST request for /oauth/token with the correct client authentication details (client ID = hyperdarts, client secret = secret), but with a wrong user</em></p>
+<p style="text-align: center;"><img alt="" height="385" name="image.png" src="https://ucarecdn.com/fb61c82b-354c-4e92-9811-d99cf116e216/" width="774"/></p>
+<p><em>Response: </em><code class="language-java">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-java">{
+    "error": "invalid_grant",
+    "error_description": "Bad credentials"
+}</code></pre>
+<p><strong>Example 3: </strong><em>a POST request for /oauth/token with the correct client and user details</em></p>
+<p><img alt="" height="387" name="image.png" src="https://ucarecdn.com/01404b5e-ed03-48f7-b61a-69d959c819ee/" width="1294"/></p>
+<p><em>Response:</em> <code class="language-java">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-java">{
+    "access_token": "eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOlsiYXBpIl0sInVzZXJfbmFtZSI6InJvYmluaG9vZEBhY21lLmNvbSIsInNjb3BlIjpbImdhbWVyIl0sImV4cCI6MTYzNzU3MjA3NywiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sImp0aSI6IjQyMGY0NmYxLWY1ZjEtNGE1Zi04NzcwLWY2NGFhMGUyODQyYiIsImNsaWVudF9pZCI6Imh5cGVyZGFydHMifQ.fuRutjimlUq5R_HADnvTWGBN4cii4IseWeERXrG-8FeqDVNGjhCzJ7syvAKMVM6q-wEzM2dotmjjYnI8PFLxWmhojpSobJ4_2y1_muFOWRKpbF7-wq-jGyl_XKQqIvjfH7voA_XHhuY6Ln-X-a5Hd6s_CSVERP-bWK_PfnF7f1s",
+    "token_type": "bearer",
+    "refresh_token": "eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOlsiYXBpIl0sInVzZXJfbmFtZSI6InJvYmluaG9vZEBhY21lLmNvbSIsInNjb3BlIjpbImdhbWVyIl0sImF0aSI6IjQyMGY0NmYxLWY1ZjEtNGE1Zi04NzcwLWY2NGFhMGUyODQyYiIsImV4cCI6MTYzNzU3MjA3NywiYXV0aG9yaXRpZXMiOlsiUk9MRV9VU0VSIl0sImp0aSI6ImE1NTNlOTc4LTVlYjgtNGU5NC1hOWUwLWVjNTJjODA5ZDJjNyIsImNsaWVudF9pZCI6Imh5cGVyZGFydHMifQ.hiJErR-aUs5rcvHrqVwXb7ivjpmAUcqTZZH7_XHfElKOw5DddagiLtwinbB9tNNpuDZSwuTFCBan3wjOaY4Nf69rT3XlbdKyf0BN3SksxvV47Jb6L9TvMMBiH0uCuPqEQatPP34votH-0xXdaUxrSloY7WUv0n0JOGpuTxAlEOA",
+    "expires_in": 3599,
+    "scope": "read write update",
+    "jti": "420f46f1-f5f1-4a5f-8770-f64aa0e2842b"
+}</code></pre>

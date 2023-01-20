@@ -1,0 +1,176 @@
+type: edu
+files:
+- name: src/dartsgame/DartsGameApplication.java
+  visible: true
+  text: |-
+    package dartsgame;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class DartsGameApplication {
+        public static void main(String[] args) {
+            SpringApplication.run(DartsGameApplication.class, args);
+        }
+    }
+  learner_created: false
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
+- name: test/DartsGameTest.java
+  visible: false
+  text: |-
+    import com.google.gson.JsonObject;
+    import dartsgame.DartsGameApplication;
+    import org.hyperskill.hstest.dynamic.DynamicTest;
+    import org.hyperskill.hstest.dynamic.input.DynamicTesting;
+    import org.hyperskill.hstest.exception.outcomes.WrongAnswer;
+    import org.hyperskill.hstest.mocks.web.request.HttpRequest;
+    import org.hyperskill.hstest.mocks.web.response.HttpResponse;
+    import org.hyperskill.hstest.stage.SpringTest;
+    import org.hyperskill.hstest.testcase.CheckResult;
+    import static org.hyperskill.hstest.common.JsonUtils.getJson;
+    import static org.hyperskill.hstest.mocks.web.constants.Headers.AUTHORIZATION;
+    import static org.hyperskill.hstest.testing.expect.Expectation.expect;
+    import static org.hyperskill.hstest.testing.expect.json.JsonChecker.*;
+
+    class TestHint {
+        private final String apiPath;
+        private final String requestBody;
+        private final String message;
+
+        public TestHint(String apiPath, String requestBody, String message) {
+            this.apiPath = apiPath;
+            this.requestBody = requestBody;
+            this.message = message;
+        }
+
+        @Override
+        public String toString() {
+            return "Test case\n" +
+                    "Testing api: '" + apiPath + '\'' + "\n" +
+                    (requestBody.length() > 0 ? "request: '" + requestBody + '\'' + "\n" : "") +
+                    "Expectations: '" + message + "'" + "\n" +
+                    "-----";
+        }
+    }
+
+    public class DartsGameTest extends SpringTest {
+
+        private final String correctAnswer = """
+            {
+               "status": "Under construction!"
+            }""";
+
+        private final String apiCreate = "/api/game/create";
+        private final String apiList = "/api/game/list";
+        private final String apiJoin = "/api/game/join";
+        private final String apiStatus = "/api/game/status";
+        private final String apiThrows = "/api/game/throws";
+
+        public DartsGameTest() {
+            super(DartsGameApplication.class);
+        }
+
+        private HttpResponse checkResponseStatus(String token, int status, String api, String method) {
+            get(api);
+            HttpRequest request = switch (method) {
+                case "GET" -> get(api);
+                case "POST" -> post(api, "");
+                case "PUT" -> put(api, "");
+                case "DELETE" -> delete(api);
+                default -> get(api);
+            };
+
+            if (token != null) {
+                String headerValue = "Bearer " + token;
+                request = request.addHeader(AUTHORIZATION, headerValue);
+            }
+            HttpResponse response = request.send();
+
+            if (response.getStatusCode() != status) {
+                throw new WrongAnswer(method + " " + api  + " should respond with "
+                        + "status code " + status + ", responded: " + response.getStatusCode() + "\n"
+                        + "Response body:\n" + response.getContent() + "\n");
+            }
+            return response;
+        }
+
+        private CheckResult testApi(String api, String method,
+                                    int status, String token, String answer, TestHint hint) {
+
+            System.out.println(hint.toString());
+
+            HttpResponse response = checkResponseStatus(token, status, api, method);
+            JsonObject correctJson = getJson(answer).getAsJsonObject();
+
+            // Check JSON in response
+            if (response.getStatusCode() == 200) {
+                expect(response.getContent()).asJson().check(
+                        isObject()
+                                .value("status", correctJson.get("status").getAsString()));
+
+            }
+            return CheckResult.correct();
+        }
+
+        @DynamicTest
+        DynamicTesting[] dt = new DynamicTesting[]{
+                () -> testApi(apiCreate, "POST", 200, "test-token", correctAnswer,
+                        new TestHint(apiCreate, "", "Testing POST method for endpoint")),
+                () -> testApi(apiList, "GET", 200, "test-token", correctAnswer,
+                        new TestHint(apiList, "", "Testing GET method for endpoint")),
+                () -> testApi(apiJoin, "GET", 200, "test-token", correctAnswer,
+                        new TestHint(apiJoin, "", "Testing GET method for endpoint")),
+                () -> testApi(apiStatus, "GET", 200, "test-token", correctAnswer,
+                        new TestHint(apiStatus, "", "Testing GET method for endpoint")),
+                () -> testApi(apiThrows, "POST", 200, "test-token", correctAnswer,
+                        new TestHint(apiThrows, "", "Testing POST method for endpoint"))
+        };
+    }
+  learner_created: false
+- name: build.gradle
+  visible: true
+  text: |-
+    buildscript {
+        apply plugin: 'hyperskill'
+
+        repositories {
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath "org.springframework.boot:spring-boot-gradle-plugin:$hs.spring.bootVersion"
+            classpath "io.spring.gradle:dependency-management-plugin:$hs.spring.dependencyManagementVersion"
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.security:spring-security-jwt:1.1.1.RELEASE'
+    }
+  learner_created: false
+- name: src/dartsgame/StarterController.java
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/projects/228/stages/1141/implement#comment
+status: Solved
+record: 1

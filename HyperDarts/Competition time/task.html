@@ -1,0 +1,251 @@
+<h5 id="description">Description</h5>
+<p>Various issues and controversies may arise during a game, so it's a good idea to add a third party to resolve these things. We will add a new role to our service, <code class="language-json">referee</code>, and the corresponding functionality.</p>
+<p>The <code class="language-json">referee</code> can perform the following functions:</p>
+<ul>
+<li>Close the game if one of the participants left the tournament due to any reason. in this case, the victory is awarded to the other participant. As a backup plan, add the <code class="language-json">Nobody wins!</code> status. Just in case;</li>
+<li>The referee can roll back the game status by one or more moves if the player made a mistake.</li>
+</ul>
+<p>Also, players and the referee should be able to view the history of throws.</p>
+<h5 id="objectives">Objectives</h5>
+<ul>
+<li>Add to a new user with the role of <code class="language-json">referee</code> to the authorization server:</li>
+</ul>
+<pre><code class="language-json">User 5:
+    login = "judgedredd@acme.com"
+    password = "iAmALaw100500"
+    role = "REFEREE"
+</code></pre>
+<ul>
+<li>Implement the <code class="language-json">PUT api/game/cancel</code> endpoint. It must be available to the <code class="language-json">referee</code> only. The scope is <code class="language-json">update</code>; it should accept data in the JSON format:</li>
+</ul>
+<pre><code class="language-json">{
+  "gameid": &lt;Integer&gt;,
+  "status": &lt;String&gt;
+}</code></pre>
+<p>The <code class="language-json">status</code> field must have the following format: <code class="language-json">&lt;"Player Name"</code> or <code class="language-json">"Nobody"&gt; wins!</code>. <code class="language-json">Player Name</code> is the name of the player who participates in a specified game. If a game with the specified <code class="language-json">gameid</code> is not found, the endpoint must respond with the <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Game not found!"
+}</code></pre>
+<p>If the <code class="language-json">status</code> field of the request doesn't contain a player who participates in the game, or in case of the wrong format of the request body, the endpoint must respond with the <code class="language-json">HTTP BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Wrong status!"
+}</code></pre>
+<p>If the game with the specified <code class="language-json">gameid</code> is already finished ( the status is <code class="language-json">&lt;Player Name&gt; wins!</code>), the endpoint must respond with the <code class="language-json">BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "The game is already over!"
+}</code></pre>
+<p>In case of success, the endpoint must respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "gameId": &lt;Integer&gt;,
+  "playerOne": &lt;String PlayerOne&gt;,
+  "playerTwo": &lt;String PlayerTwo&gt;,
+  "gameStatus": &lt;String "new status"&gt;,
+  "playerOneScores": &lt;Integer&gt;,
+  "playerTwoScores": &lt;Integer&gt;,
+  "turn": &lt;String&gt;
+}</code></pre>
+<ul>
+<li>
+<p>Change the game logic so that when both participants have entered the game, the app registers the move with the number of <code class="language-json">0</code> to record the initial conditions. Also, during the game, store the player moves in ascending order (<code class="language-json">0</code>, <code class="language-json">1</code>, <code class="language-json">2</code> ...) in history;</p>
+</li>
+<li>
+<p>Implement the <code class="language-json">GET api/history/{gameid}</code> endpoint. It must be available to the authorized users (for all roles and scopes – <code class="language-json">read</code>) and respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the following body provided that the game with the specified <code class="language-json">gameid</code> is found and the status of the game is not <code class="language-json">created</code>:</p>
+</li>
+</ul>
+<pre><code class="language-json">[
+   {
+      "gameId":"&lt;Long&gt;",
+      "move": 0,
+      "playerOne":"&lt;String&gt;",
+      "playerTwo":"&lt;String&gt;",
+      "gameStatus":"started",
+      "playerOneScores":"&lt;Integer&gt;",
+      "playerTwoScores":"&lt;Integer&gt;",
+      "turn":"&lt;String&gt;"
+
+   },
+   {
+      "gameId":"&lt;Long&gt;",
+      "move": 1,
+      "playerOne":"&lt;String&gt;",
+      "playerTwo":"&lt;String&gt;",
+      "gameStatus":"started",
+      "playerOneScores":"&lt;Integer&gt;",
+      "playerTwoScores":"&lt;Integer&gt;",
+      "turn":"&lt;String&gt;"
+   }
+]</code></pre>
+<p>Note that the <code class="language-json">gameid</code> must be equal to or greater than <code class="language-json">0</code>. The array must be sorted by <code class="language-json">move</code> in ascending order.</p>
+<p>If a game with a specified <code class="language-json">gameid</code> is not found or its status is <code class="language-json">created</code>, the endpoint must respond with the <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Game not found!"
+}</code></pre>
+<p>In case of the wrong format, the endpoint must respond with the <code class="language-json">HTTP BAD REQUEST</code> status <code class="language-json">400</code> with the body below:</p>
+<pre><code class="language-json">{
+  "result": "Wrong request!"
+}</code></pre>
+<ul>
+<li>Implement the <code class="language-json">PUT api/game/revert</code> endpoint. It must be available to the <code class="language-json">referee</code> only. The scope is <code class="language-json">update</code>; it accepts data in the JSON format:</li>
+</ul>
+<pre><code class="language-json">{
+  "gameId": &lt;Integer&gt;,
+  "move": &lt;Integer&gt;
+}</code></pre>
+<p>The endpoint should roll back the current status of the game to one of the states available in the game history. Once the game state is reverted to the specified move, the moves following it should be deleted from the history. If the game with the specified <code class="language-json">gameid</code> is found, and a <code class="language-json">move</code> with the specified number was found in history, the endpoint must respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "gameId": &lt;Integer&gt;,
+  "playerOne": &lt;String PlayerOne&gt;,
+  "playerTwo": &lt;String PlayerTwo&gt;,
+  "gameStatus": &lt;String&gt;,
+  "playerOneScores": &lt;Integer&gt;,
+  "playerTwoScores": &lt;Integer&gt;,
+  "turn": &lt;String&gt;
+}</code></pre>
+<p>If the game with the specified <code class="language-json">gameid</code> is not found, the endpoint must respond with the <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the JSON below:</p>
+<pre><code class="language-json">{
+  "result": "Game not found!"
+}</code></pre>
+<p>If the specified <code class="language-json">move</code> is not found, the endpoint must respond with the <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Move not found!"
+}</code></pre>
+<p>If the specified <code class="language-json">move</code> is the last in the game, the endpoint must respond with the <code class="language-json">BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "There is nothing to revert!"
+}</code></pre>
+<p>If a game with a specified <code class="language-json">gameId</code> is found, and the game status is <code class="language-json">&lt;Player Name&gt; wins!</code>, the endpoint must respond with the <code class="language-json">BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "The game is over!"
+}</code></pre>
+<p>In case of a wrong format request, the endpoint must respond with <code class="language-json">HTTP BAD REQUEST</code> status <code class="language-json">400</code>.</p>
+<h5 id="examples">Examples</h5>
+<p><strong>Example 1: </strong><em>PUT request for /api/game/revert with the access token (wrong scope)</em></p>
+<pre><code class="language-json">{
+  "alg":"RS256"
+}
+{
+  "aud":["api"],
+  "user_name":"judgedredd@acme.com",
+  "scope":["read"],
+  "exp":1637693103,
+  "authorities":["ROLE_REFEREE"],
+  "jti":"3683349d-7a87-491d-a8bb-f1fed303597b",
+  "client_id":"hyperdarts"
+}
+[128 crypto bytes]</code></pre>
+<p><em>Response: </em><code class="language-json">403 FORBIDDEN</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+    "error": "insufficient_scope",
+    "error_description": "Insufficient scope for this resource",
+    "scope": "update"
+}</code></pre>
+<p><strong>Example 2: </strong><em>PUT request for /api/game/revert with the correct access token (scope "update", and the user role "REFEREE") and data in the body</em></p>
+<pre><code class="language-json">{
+  "gameId": 1,
+  "move": 2
+}</code></pre>
+<p><em>Response: </em><code class="language-json">200 OK</code> </p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+  "gameId" : 1,
+  "playerOne" : "playerOne@acme.com",
+  "playerTwo" : "playerTwo@acme.com",
+  "gameStatus" : "playing",
+  "playerOneScores" : 487,
+  "playerTwoScores" : 321,
+  "turn" : "playerOne@acme.com"
+}</code></pre>
+<p><strong>Example 3:</strong> <em>PUT request for /api/game/revert with the correct access token (scope "update" and the user role "REFEREE") and the wrong data in the body</em></p>
+<pre><code class="language-json">{
+  "gameId": -1,
+  "move": 2
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code> </p>
+<p><strong>Example 4:</strong> <em>PUT request for /api/game/revert with the correct access token (scope "update" and the user role "REFEREE"), but the game is not found</em></p>
+<pre><code class="language-json">{
+  "gameId": 999,
+  "move": 2
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 NOT FOUND</code> </p>
+<pre><code class="language-json">{
+  "result": "Game not found!"
+}</code></pre>
+<p><strong>Example 5: </strong><em>PUT request for /api/game/revert with the correct access token (scope "update" and the user role "REFEREE"); the move is the last in the history</em></p>
+<pre><code class="language-json">{
+  "gameId": 1,
+  "move": 2
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code> </p>
+<pre><code class="language-json">{
+  "result": "There is nothing to revert!"
+}</code></pre>
+<p><strong>Example 6: </strong><em>PUT request for /api/game/cancel with the correct access token (scope "update" and the user role "REFEREE"); the gameId is the id for an unfinished game</em></p>
+<pre><code class="language-json">{
+  "gameId": 1,
+  "status": "Nobody wins!"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">200 OK</code> </p>
+<pre><code class="language-json">{
+  "gameId" : 1,
+  "playerOne" : "playerOne@acme.com",
+  "playerTwo" : "",
+  "gameStatus" : "Nobody wins!",
+  "playerOneScores" : 101,
+  "playerTwoScores" : 101,
+  "turn" : "playerOne@acme.com"
+}</code></pre>
+<p><strong>Example 7: </strong><em>PUT request for /api/game/cancel with the correct access token (scope "update" and the user role "REFEREE"); the gameId is the id for an unfinished game, but the player specified in the status field is not a participant of the game</em></p>
+<pre><code class="language-json">{
+  "gameId": 1,
+  "status": "UnknownPlayer wins!"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code> </p>
+<pre><code class="language-json">{
+  "result": "Wrong status!"
+}</code></pre>
+<p><strong>Example 8: </strong><em>GET request for /api/history/-1 with the correct access token</em></p>
+<p><em>Response:</em> <code class="language-json">400 BAD REQUEST</code></p>
+<pre><code class="language-json">{
+  "result": "Wrong move!"
+}</code></pre>
+<p><strong>Example 9: </strong><em>GET request for /api/history/9999 with a correct access token, and the game is not found</em></p>
+<p><em>Response:</em> <code class="language-json">404 NOT FOUND</code></p>
+<pre><code class="language-json">{
+  "result": "Game not found!"
+}</code></pre>
+<p><strong>Example 10: </strong><em>GET request for /api/history/1 with the correct access token; the game is found:</em></p>
+<p><em>Response:</em> <code class="language-json">200 OK</code> </p>
+<pre><code class="language-json">[
+  {
+    "gameId" : 1,
+    "move" : 0,
+    "playerOne" : "ivanhoe@acme.com",
+    "playerTwo" : "robinhood@acme.com",
+    "gameStatus" : "started",
+    "playerOneScores" : 501,
+    "playerTwoScores" : 501,
+    "turn" : "ivanhoe@acme.com"
+  },
+  {
+    "gameId" : 1,
+    "move" : 1,
+    "playerOne" : "ivanhoe@acme.com",
+    "playerTwo" : "robinhood@acme.com",
+    "gameStatus" : "playing",
+    "playerOneScores" : 487,
+    "playerTwoScores" : 501,
+    "turn" : "robinhood@acme.com"
+  },
+ ....
+  {
+    "gameId" : 1,
+    "move" : 9,
+    "playerOne" : "ivanhoe@acme.com",
+    "playerTwo" : "robinhood@acme.com",
+    "gameStatus" : "ivanhoe@acme.com wins!",
+    "playerOneScores" : 0,
+    "playerTwoScores" : 141,
+    "turn" : "ivanhoe@acme.com"
+  }
+]</code></pre>

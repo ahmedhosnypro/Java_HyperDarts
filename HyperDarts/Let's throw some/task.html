@@ -1,0 +1,208 @@
+<h5 id="description">Description</h5>
+<p>We have done everything to finally start the game! Users will use 2 endpoints <code class="language-json">status</code> and <code class="language-json">throws</code> during the game. The <code class="language-json">throws</code> endpoint accepts the results of throws and changes the current state of the game accordingly.</p>
+<p>Let's get familiar with the game rules.</p>
+<p>Players start the game with the number of points specified before a game starts (<code class="language-json">101</code>, <code class="language-json">301</code>, or <code class="language-json">501</code>). The goal is to reduce the number of points to <code class="language-json">0</code>. Each player can make three throws per turn max.</p>
+<p>Scoring:</p>
+<ul>
+<li>The dartboard is divided into 20 numbered sections, from <code class="language-json">1</code> to <code class="language-json">20</code> points. Each section is subdivided into single, double, and treble areas.</li>
+<li>The central circle is divided into a green outer ring worth 25 points (known as the outer bull) and a red or black inner circle (usually known as the bull), worth 50 points.</li>
+</ul>
+<p>Take a look at the dartboard below:</p>
+<p style="text-align: center;"><img alt="" height="330" name="image.png" src="https://ucarecdn.com/e621b82a-a707-4521-9080-f5b54126d348/" width="330"/></p>
+<p>Consider the limitations:</p>
+<ul>
+<li>The last throw (which brings the score to <code class="language-json">0</code>) should be a double-throw (or to the bull);</li>
+<li>The last throw must exactly match the remaining score;</li>
+<li>You cannot score more points than the remaining score (if you go into negative, it's a bust);</li>
+<li>The remaining score after the end of the turn (3 throws) must be greater than <code class="language-json">1</code>; otherwise, it is impossible to throw a double;</li>
+<li>Max score from one turn is <code class="language-json">180</code> (triple 20, triple 20, triple 20);</li>
+<li>Min score is <code class="language-json">0</code> (all darts miss the dartboard).</li>
+</ul>
+<h5 id="objectives">Objectives</h5>
+<ul>
+<li>Implement the <code class="language-json">POST api/game/throws</code> endpoint. It must be available to the authorized users and accept data in the JSON format:</li>
+</ul>
+<pre><code class="language-json">{
+  "first": "&lt;multiplicator&gt;:&lt;score&gt;",
+  "second": "&lt;multiplicator&gt;:&lt;score&gt; or &lt;none&gt;",
+  "third": "&lt;multiplicator&gt;:&lt;score&gt; or &lt;none&gt;"
+}</code></pre>
+<p>Multiplicator <code class="language-json">1</code> is for the single area, <code class="language-json">2</code> for double, <code class="language-json">3</code> for treble.</p>
+<p>Score values must be in the range from <code class="language-json">0</code> to <code class="language-json">20</code> and <code class="language-json">25</code>. They represent the sectors on the dartboard. Correct values for a miss – <code class="language-json">1:0</code>; for a bull – <code class="language-json">2:25</code>. If player busts or checks out (wins the game), the <code class="language-json">second</code> and/or <code class="language-json">third</code> fields may be <code class="language-json">none</code>.</p>
+<p>The endpoint should be available to players only if they participate in the game — there is a game on the server with the <code class="language-json">started</code> or <code class="language-json">playing</code> status, the player is one of the participants, and it is their turn. After the endpoint receives the first correct move from the player, the game status should change to <code class="language-json">playing</code>. The data received by the endpoint must be validated and comply with the game rules. If both conditions are met, change the state of the game (<code class="language-json">scores</code>, <code class="language-json">game status</code>, and <code class="language-json">turn</code>).<br/>
+<br/>
+<strong>Bust conditions</strong>: If after a throw, a player ends up in the negative, or one, or zero, it is known as "going bust". The player cannot finish the leg. The player's score is reset to its value at the start of that turn. Any remaining throws in the turn are canceled (the values of the corresponding field are <code class="language-json">none</code>). The turn goes to the next player.<br/>
+<br/>
+<strong>Checkout condition</strong>: Once a player reduces the score to exactly zero after throwing a dart in the double area or the bull (<code class="language-json">2:25</code>), the leg is finished, and the victory is awarded to the player who made this throw. If the player still has some throws left, they are skipped (the value of the corresponding field are <code class="language-json">none</code>). The game status must be set to <code class="language-json">PlayerName wins!</code>, and the player score is set to <code class="language-json">0</code>.</p>
+<p>In case of success, the endpoint must respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "gameId": 1,
+  "playerOne": &lt;String PlayerOne&gt;,
+  "playerTwo": &lt;String PlayerTwo&gt;,
+  "gameStatus": "Playing",
+  "playerOneScores": &lt;Integer&gt;,
+  "playerTwoScores": &lt;Integer&gt;,
+  "turn": &lt;String PlayerTwo&gt;
+}</code></pre>
+<p>If the game continues, then the move goes to another player,<span style="color: #66cc66;"> </span>and the state of the game must be changed accordingly. The bust and checking-out conditions also must be met. When one player checks out, the game ends with their victory.</p>
+<p>If no games are available, the endpoint must respond with the <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "There are no games available!"
+}</code></pre>
+<p>In case of the wrong format of the request body or extra throws, the endpoint must respond with the <code class="language-json">HTTP BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Wrong throws!"
+}</code></pre>
+<p>If a user tries to send throws when it's not their turn, the endpoint must respond with the <code class="language-json">HTTP BAD REQUEST</code> status <code class="language-json">400</code> and the following JSON:</p>
+<pre><code class="language-json">{
+  "result": "Wrong turn!"
+}</code></pre>
+<ul>
+<li>Change <code class="language-json">GET api/game/status</code> endpoint:</li>
+</ul>
+<p>If a user is involved in a game on the server (the status is <code class="language-json">started</code> or <code class="language-json">playing</code>), the endpoint must respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the JSON representing the current state of the game.</p>
+<p>If a player does not participate in games with the status of <code class="language-json">playing</code> or <code class="language-json">started</code>, but they have completed a game (<code class="language-json">status = PlayerName wins!</code>), the endpoint must respond with the <code class="language-json">HTTP OK</code> status <code class="language-json">200</code> and the JSON representing the status of the last completed game; the response body is like in the previous stage.</p>
+<p>If a user does not participate in the game(s), the endpoint must respond with <code class="language-json">HTTP NOT FOUND</code> status <code class="language-json">404</code> and the following JSON:</p>
+<pre><code class="language-json">{}</code></pre>
+<h5 id="examples">Examples</h5>
+<p></p><div class="alert alert-warning"><em>Game state:</em>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "Started",
+        "playerOneScores": 501,
+        "playerTwoScores": 501,
+        "turn": "PlayerOne"
+    }</code></pre>
+<p></p></div>
+<p><strong>Example 1: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerTwo" and the body</em></p>
+<pre><code class="language-json">{
+  "first": "3:20",
+  "second": "3:20",
+  "third": "3:20"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+  "result": "Wrong turn!"
+}</code></pre>
+<p><strong>Example 2: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerOne" and the body</em></p>
+<pre><code class="language-json">{
+  "first": "3:22",
+  "second": "3:20",
+  "third": "3:20"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+  "result": "Wrong throws!"
+}</code></pre>
+<p><strong>Example 3: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerOne" and the body</em>:</p>
+<pre><code class="language-json">{
+  "first": "3:20",
+  "second": "3:20",
+  "third": "3:20"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "Started",
+        "playerOneScores": 321,
+        "playerTwoScores": 501,
+        "turn": "PlayerTwo"
+    }</code></pre>
+<p></p><div class="alert alert-warning"><em>Game state:</em>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "Started",
+        "playerOneScores": 20,
+        "playerTwoScores": 25,
+        "turn": "PlayerOne"
+    }</code></pre>
+<p></p></div>
+<p><strong>Example 4: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerOne" and the body</em></p>
+<pre><code class="language-json">{
+  "first": "1:10",
+  "second": "1:11",
+  "third": "1:5"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">400 BAD REQUEST</code> <em>(extra throws after the bust condition)</em></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+  "result": "Wrong throws!"
+}</code></pre>
+<p><strong>Example 5: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerOne" and the body:</em></p>
+<pre><code class="language-json">{
+  "first": "1:10",
+  "second": "1:9",
+  "third": "none"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">200 OK</code> <em>(the bust condition, score not changed, a new turn)</em></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "Started",
+        "playerOneScores": 20,
+        "playerTwoScores": 25,
+        "turn": "PlayerTwo"
+    }</code></pre>
+<p><strong>Example 6: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerTwo" and the body:</em></p>
+<pre><code class="language-json">{
+  "first": "1:5",
+  "second": "2:10",
+  "third": "none"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">200 OK</code> (<em>the checkout condition</em>)</p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "PlayerTwo wins!",
+        "playerOneScores": 20,
+        "playerTwoScores": 0,
+        "turn": "PlayerTwo"
+    }</code></pre>
+<p></p><div class="alert alert-warning">
+<p>Game state:</p>
+<pre><code class="language-json">    {
+        "gameId": 1,
+        "playerOne": "PlayerOne",
+        "playerTwo": "PlayerTwo",
+        "gameStatus": "PlayerOne wins!",
+        "playerOneScores": 0,
+        "playerTwoScores": 25,
+        "turn": "PlayerOne"
+    }</code></pre>
+<p></p></div>
+<p><strong>Example 7: </strong><em>POST request for /api/game/throws with the correct access token for the user "PlayerOne" and the body:</em></p>
+<pre><code class="language-json">{
+  "first": "1:5",
+  "second": "2:10",
+  "third": "none"
+}</code></pre>
+<p><em>Response: </em><code class="language-json">404 NOT FOUND</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+  "result": "There are no games available!"
+}</code></pre>
+<p><strong>Example 8: </strong><em>a GET request for /api/game/status with the correct access token</em></p>
+<p><em>Response: </em><code class="language-json">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+    "gameId": 1,
+    "playerOne": "PlayerOne@acme.com",
+    "playerTwo": "PlayerTwo@acme.com",
+    "gameStatus": "PlayerOne@acme.com wins!",
+    "playerOneScores": 0,
+    "playerTwoScores": 301,
+    "turn": "PlayerOne@acme.com"
+}</code></pre>

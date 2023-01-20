@@ -1,0 +1,132 @@
+<h5 id="description">Description</h5>
+<p>It's time to set up protection for our HyperDarts service. If you remember, our service acts as the Resource server. The Resource server protects resources (endpoints) with <strong>OAuth tokens</strong>. They are issued by an authorization server. The main task of the resource server is to validate a token before granting access to the API. Note that the resource server does not authenticate users but only checks the access rights.</p>
+<p>It is quite simple to set up a resource server in our application with the annotation of <code class="language-java">@EnableResourceServer</code> from Spring Security. <br/>
+    Adding one class to the project that extends the <code class="language-java">ResourceServerConfigurerAdapter</code> class will be enough:</p>
+<pre><code class="language-java">import ...
+
+@Configuration
+@EnableResourceServer
+public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
+
+    String publicKey;
+
+    private TokenStore tokenStore;
+
+    // Create JwtTokenStore with this token enhancer
+    @Bean
+    public TokenStore tokenStore() {
+        if (tokenStore == null) {
+            tokenStore = new JwtTokenStore(jwtAccessTokenConverter());
+        }
+        return tokenStore;
+    }
+
+    // Add resource-server specific properties (the resource id from previous stage).
+    @Override
+    public void configure(ResourceServerSecurityConfigurer resources) {
+        resources.resourceId("api");
+    }
+
+    // Use the following to configure access rules for secure resources.
+    @Override
+    public void configure(final HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests()
+                .antMatchers("/actuator/shutdown").permitAll() // needs to run test
+                .antMatchers(HttpMethod.GET, "/**")
+                .access("(#oauth2.hasScope('read') and hasRole('ROLE_USER'))")
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .csrf().disable();
+    }
+
+    //  A helper that exchanges JWT encoded token values and OAuth authentication
+    // information (both directions). It also acts as a TokenEnhancer when the tokens are granted.
+    @Bean
+    public JwtAccessTokenConverter jwtAccessTokenConverter() {
+        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        converter.setVerifierKey(publicKey);
+        return converter;
+    }
+
+}</code></pre>
+<h5 id="objectives">Objectives</h5>
+<ul>
+<li>
+<p>Implement the Resource server and configure it as follows:</p>
+<pre><code class="language-java">Public Key ="-----BEGIN PUBLIC KEY-----MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDQ+7yKlJGuvYtf1soMsJjkQJGAXe90QAxqppycf+3JT5ehnvvWtwS8ef+UsqrNa5Rc9tyyHjP7ZXRN145SlRTZzc0d03Ez10OfAEVdhGACgRxS5s+GZVtdJuVcje3Luq3VIvZ8mV/P4eRcV3yVKDwQEenMuL6Mh6JLH48KxgbNRQIDAQAB-----END PUBLIC KEY-----"</code></pre>
+<p>Note that parentheses mean a string parameter.</p>
+</li>
+<li>
+<p>Implement the following access rules (<code class="language-java">antMatchers()</code> and <code class="language-java">access()</code>):</p>
+<p>— Access token for <code class="language-java">GAMER</code> roles with the <code class="language-java">read</code> scope must have access to all <code class="language-java">GET</code> APIs;<br/>
+            — Access token for <code class="language-java">GAMER</code> roles with the <code class="language-java">write</code> scope must have access to all <code class="language-java">POST</code> APIs.</p>
+</li>
+<li>All API's with the <code class="language-java">200 OK</code> status must respond with the following JSON body (in case of successful authentication with an access token):
+        <pre><code class="language-java">{
+   "status": "&lt;user name from access token&gt;"
+}</code></pre>
+</li>
+</ul>
+<h5 id="examples">Examples</h5>
+<p><strong>Example 1: </strong><em>a POST request for /api/game/create with an access token</em></p>
+<pre><code class="language-json">{
+  "alg":"RS256"
+}
+{
+  "aud":["api"],
+  "user_name":"robinhood@acme.com",
+  "scope":["write"],
+  "exp":1637693103,
+  "authorities":["ROLE_GAMER"],
+  "jti":"3683349d-7a87-491d-a8bb-f1fed303597b",
+  "client_id":"hyperdarts"
+}
+[128 crypto bytes]</code></pre>
+<p><em>Response: </em><code class="language-java">200 OK</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+    "status": "robinhood@acme.com"
+}</code></pre>
+<p><strong>Example 2:</strong> <em>a POST request for /api/game/create with an access token (insufficient scope):</em></p>
+<pre><code class="language-json">{
+  "alg":"RS256"
+}
+{
+  "aud":["api"],
+  "user_name":"robinhood@acme.com",
+  "scope":["read"],
+  "exp":1637693103,
+  "authorities":["ROLE_GAMER"],
+  "jti":"3683349d-7a87-491d-a8bb-f1fed303597b",
+  "client_id":"hyperdarts"
+}
+[128 crypto bytes]</code></pre>
+<p><em>Response: </em><code class="language-java">403 FORBIDDEN</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+    "error": "insufficient_scope",
+    "error_description": "Insufficient scope for this resource",
+    "scope": "write"
+}</code></pre>
+<p><strong>Example 3:</strong><strong> </strong><em>a POST request for /api/game/create with an access token (access denied):</em></p>
+<pre><code class="language-json">{
+  "alg":"RS256"
+}
+{
+  "aud":["api"],
+  "user_name":"admin@acme.com",
+  "scope":["read write"],
+  "exp":1637693103,
+  "authorities":["ROLE_ADMIN"],
+  "jti":"3683349d-7a87-491d-a8bb-f1fed303597b",
+  "client_id":"hyperdarts"
+}
+[128 crypto bytes]</code></pre>
+<p><em>Response: </em><code class="language-java">403 FORBIDDEN</code></p>
+<p><em>Response body:</em></p>
+<pre><code class="language-json">{
+    "error": "access_denied",
+    "error_description": "Access is denied"
+}</code></pre>
