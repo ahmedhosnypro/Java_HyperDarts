@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure:2.6.8">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security.oauth.boot/spring-security-oauth2-autoconfigure/2.6.8/d9ce52f45c4689c1f445d08550ed7c4adcb920e3/spring-security-oauth2-autoconfigure-2.6.8.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security.oauth.boot/spring-security-oauth2-autoconfigure/2.6.8/bcf9fff530733f25b8282c9bfa46bdd4f6160e5f/spring-security-oauth2-autoconfigure-2.6.8-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

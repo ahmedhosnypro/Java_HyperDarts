@@ -1,4 +1,4 @@
-package dartsgame;
+package dartsgame.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-public class StarterController {
+public class GameController {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Map<String, String> response = Map.of("status", "Under construction!");
 

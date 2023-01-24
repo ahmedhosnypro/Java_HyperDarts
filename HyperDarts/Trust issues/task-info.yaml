@@ -57,70 +57,6 @@ files:
         implementation 'org.springframework.security:spring-security-jwt:1.1.1.RELEASE'
     }
   learner_created: false
-- name: src/dartsgame/StarterController.java
-  visible: true
-  text: |
-    package dartsgame;
-
-    import com.fasterxml.jackson.core.JsonProcessingException;
-    import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.springframework.web.bind.annotation.GetMapping;
-    import org.springframework.web.bind.annotation.PostMapping;
-    import org.springframework.web.bind.annotation.RestController;
-
-    import java.util.Map;
-
-    @RestController
-    public class StarterController {
-        private final ObjectMapper mapper = new ObjectMapper();
-        private final Map<String, String> response = Map.of("status", "Under construction!");
-
-        @PostMapping("/create")
-        public String createGame() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/list")
-        public String listGames() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/join")
-        public String joinGame() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/status")
-        public String gameStatus() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @PostMapping("/throws")
-        public String throwDart() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-  learner_created: false
 - name: test/DartsGameTest.java
   visible: false
   text: |-
@@ -346,6 +282,21 @@ files:
 
     }
   learner_created: false
+- name: src/dartsgame/auth/SecurityConfiguration.java
+  visible: true
+  learner_created: true
+- name: src/dartsgame/auth/OAuthConfiguration.java
+  visible: true
+  learner_created: true
+- name: src/dartsgame/controller/GameController.java
+  visible: true
+  learner_created: true
+- name: src/resources/static/index.html
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/228/stages/1142/implement#comment
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Tue, 24 Jan 2023 12:04:52 UTC"
+record: 2
