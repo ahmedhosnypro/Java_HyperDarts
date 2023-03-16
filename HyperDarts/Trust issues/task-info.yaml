@@ -294,7 +294,7 @@ files:
 - name: src/resources/static/index.html
   visible: true
   learner_created: true
-feedback_link: https://hyperskill.org/projects/228/stages/1142/implement#comment
+feedback_link: https://hyperskill.org/learn/step/17689#comment
 status: Solved
 feedback:
   message: Congratulations!

@@ -1,0 +1,11 @@
+<h2>DTO implementation with POJO</h2>
+<p></p><p>You have a class called <code class="language-java">Product</code> in your project:</p><pre><code class="language-java">class Product {
+    private long id;
+    private String model;
+    private int price;
+    private LocalDate dateOfArrival;
+    private String vendor;
+
+    //constructors, getters, and setters
+}
+</code></pre><p>Your client doesn't need the information about the product's date of arrival and its vendor. Implement the <code class="language-java">ProductDTO</code> class considering this fact. Do it with the help of the POJO class. Your DTO implementation must have the constructor with all of the fields as arguments. It must also have getters and setters for the fields</p><p>Note that your class itself can't be <code class="language-java">public</code> in this task due to the testing specifics of the platform. But its methods should have a <code class="language-java">public</code> modifier.</p><br><b>Sample Input:</b><br><pre><code class="language-no-highlight">No input.</code></pre><br><b>Sample Output:</b><br><pre><code class="language-no-highlight">Good job!</code></pre><br><br><br><font color="gray">Memory limit: 256 MB</font><br><font color="gray">Time limit: 5 seconds</font><br><br>

@@ -1,126 +1,5 @@
 type: edu
 files:
-- name: src/dartsgame/DartsGameApplication.java
-  visible: true
-  text: |-
-    package dartsgame;
-
-    import org.springframework.boot.SpringApplication;
-    import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-    @SpringBootApplication
-    public class DartsGameApplication {
-        public static void main(String[] args) {
-            SpringApplication.run(DartsGameApplication.class, args);
-        }
-    }
-  learner_created: false
-- name: src/resources/application.properties
-  visible: true
-  text: |-
-    server.port=28852
-    server.servlet.context-path=/api/game
-    management.endpoints.web.exposure.include=*
-    management.endpoint.shutdown.enabled=true
-    spring.jackson.serialization.INDENT_OUTPUT=true
-  learner_created: false
-- name: build.gradle
-  visible: true
-  text: |-
-    buildscript {
-        apply plugin: 'hyperskill'
-
-        repositories {
-            mavenCentral()
-        }
-
-        dependencies {
-            classpath "org.springframework.boot:spring-boot-gradle-plugin:$hs.spring.bootVersion"
-            classpath "io.spring.gradle:dependency-management-plugin:$hs.spring.dependencyManagementVersion"
-        }
-    }
-
-    apply plugin: 'java'
-    apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
-
-    repositories {
-        mavenCentral()
-    }
-
-    sourceSets.main.resources.srcDirs = ["src/resources"]
-
-    dependencies {
-        implementation 'org.springframework.boot:spring-boot-starter'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator'
-        implementation 'org.springframework.boot:spring-boot-starter-web'
-        implementation 'org.springframework.security:spring-security-jwt:1.1.1.RELEASE'
-    }
-  learner_created: false
-- name: src/dartsgame/StarterController.java
-  visible: true
-  text: |
-    package dartsgame;
-
-    import com.fasterxml.jackson.core.JsonProcessingException;
-    import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.springframework.web.bind.annotation.GetMapping;
-    import org.springframework.web.bind.annotation.PostMapping;
-    import org.springframework.web.bind.annotation.RestController;
-
-    import java.util.Map;
-
-    @RestController
-    public class StarterController {
-        private final ObjectMapper mapper = new ObjectMapper();
-        private final Map<String, String> response = Map.of("status", "Under construction!");
-
-        @PostMapping("/create")
-        public String createGame() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/list")
-        public String listGames() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/join")
-        public String joinGame() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @GetMapping("/status")
-        public String gameStatus() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @PostMapping("/throws")
-        public String throwDart() {
-            try {
-                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-  learner_created: false
 - name: test/DartsGameTest.java
   visible: false
   text: |-
@@ -484,6 +363,261 @@ files:
       };
     }
   learner_created: false
-feedback_link: https://hyperskill.org/projects/228/stages/1143/implement#comment
-status: Unchecked
+- name: src/resources/static/index.html
+  visible: true
+  text: |-
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+
+    </body>
+    </html>
+  learner_created: true
+- name: src/dartsgame/DartsGameApplication.java
+  visible: true
+  text: |-
+    package dartsgame;
+
+    import org.springframework.boot.SpringApplication;
+    import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+    @SpringBootApplication
+    public class DartsGameApplication {
+        public static void main(String[] args) {
+            SpringApplication.run(DartsGameApplication.class, args);
+        }
+    }
+  learner_created: false
+- name: src/resources/application.properties
+  visible: true
+  text: |-
+    server.port=28852
+    server.servlet.context-path=/api/game
+    management.endpoints.web.exposure.include=*
+    management.endpoint.shutdown.enabled=true
+    spring.jackson.serialization.INDENT_OUTPUT=true
+  learner_created: false
+- name: build.gradle
+  visible: true
+  text: |-
+    buildscript {
+        apply plugin: 'hyperskill'
+
+        repositories {
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath "org.springframework.boot:spring-boot-gradle-plugin:$hs.spring.bootVersion"
+            classpath "io.spring.gradle:dependency-management-plugin:$hs.spring.dependencyManagementVersion"
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    repositories {
+        mavenCentral()
+    }
+
+    sourceSets.main.resources.srcDirs = ["src/resources"]
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.security:spring-security-jwt:1.1.1.RELEASE'
+    }
+  learner_created: false
+- name: src/dartsgame/auth/SecurityConfiguration.java
+  visible: true
+  text: |-
+    package dartsgame.auth;
+
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.security.authentication.AuthenticationManager;
+    import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+    @EnableWebSecurity
+    public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+        @Override
+        protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+            // Hardcoded users, passwords and roles
+            auth.inMemoryAuthentication()
+                    .withUser("ivanhoe@acme.com")
+                    .password("{noop}oMoa3VvqnLxW")
+                    .roles("GAMER")
+                    .and()
+                    .withUser("robinhood@acme.com")
+                    .password("{noop}ai0y9bMvyF6G")
+                    .roles("GAMER")
+                    .and()
+                    .withUser("wilhelmtell@acme.com")
+                    .password("{noop}bv0y9bMvyF7E")
+                    .roles("GAMER")
+                    .and()
+                    .withUser("admin@acme.com")
+                    .password("{noop}zy0y3bMvyA6T")
+                    .roles("ADMIN");
+        }
+
+        @Bean
+        @Override
+        public AuthenticationManager authenticationManagerBean() throws Exception {
+            return super.authenticationManagerBean();
+        }
+    }
+  learner_created: true
+- name: src/dartsgame/auth/OAuthConfiguration.java
+  visible: true
+  text: |-
+    package dartsgame.auth;
+
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.security.authentication.AuthenticationManager;
+    import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+    import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
+    import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+    import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+    import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+    import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+    import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+
+    @Configuration
+    @EnableAuthorizationServer
+    public class OAuthConfiguration extends AuthorizationServerConfigurerAdapter {
+
+        private final AuthenticationManager authenticationManager;
+        private String clientId;
+        private String clientSecret;
+        private String jwtSigningKey;
+        private int accessTokenValiditySeconds;
+        private String[] authorizedGrantTypes;
+        private int refreshTokenValiditySeconds;
+
+        public OAuthConfiguration(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+            this.authenticationManager =
+                    authenticationConfiguration.getAuthenticationManager();
+
+            this.clientId = "hyperdarts";
+            this.clientSecret = "secret";
+            this.jwtSigningKey = "-----BEGIN RSA PRIVATE KEY-----MIICWwIBAAKBgQDQ+7yKlJGuvYtf1soMsJjkQJGAXe90QAxqppycf+3JT5ehnvvWtwS8ef+UsqrNa5Rc9tyyHjP7ZXRN145SlRTZzc0d03Ez10OfAEVdhGACgRxS5s+GZVtdJuVcje3Luq3VIvZ8mV/P4eRcV3yVKDwQEenMuL6Mh6JLH48KxgbNRQIDAQABAoGAd5k5w41W+kvbcZO4uh5uwWH6Yx5fJYZqFLcZNa845Fa6jnIv6id/fGXNUMoXWcxRcgqNLxp94Uekkc/k0XokHaEac21ReDDVmufgwujoUHVacDEWWkkool0FVBirmlWJhM8Kt0Tyr7GmUilktekTt2QC/pL0LJCbo8Exmg3DnFkCQQDpb89ftQ35zBqs+BAl9zCa3cxYGGHlBLKLPKk0MZeCSQ8iY37fwTPlpY/fmNo/rQTDLDemJ/CYNxLOFyrPBVfDAkEA5S7ZFMH+c8D2O+73p82m0ZH96afYC2kA0UFoitAntUL/hjxfWMPU5QnK5n+2gCTHynVSogCPGQovZfoHsax+VwJAH3Zba9naPV2+BqwUeRl86pKUVRdMMnLUoaGWaJt6gSvZp1fjpMLEfOI4pvlSCR0HtEqEYZemfM2HclF7CpX8wwJARt7Hzj13HABtpHbvKnrTvTayGBEJI+4ijJL3awWXYdwH/FCrA137daAjmEeh/dph1d+V3/bgSVP2+EfrHSxEHQJALeyliJOUCrXM6hqksKuJlSOxArd3UiQe9t/q6woGTC3Y2tz7Yw5CZkDPqHchmGv7+ZZv5dh2EHtxsM1SXUFVfQ==-----END RSA PRIVATE KEY-----";
+            this.accessTokenValiditySeconds = 3600;
+            this.authorizedGrantTypes = new String[]{"password", "authorization_code", "refresh_token"};
+            this.refreshTokenValiditySeconds = 3600;
+        }
+
+        @Override
+        public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+            oauthServer.checkTokenAccess("permitAll()");
+        }
+
+        @Override
+        public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+            clients.inMemory()
+                    .withClient(clientId)
+                    .secret("{noop}" + clientSecret) // NoOpPasswordEncoder
+                    .accessTokenValiditySeconds(accessTokenValiditySeconds)
+                    .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
+                    .authorizedGrantTypes(authorizedGrantTypes)
+                    .scopes("read", "write", "update")
+                    .resourceIds("api");
+        }
+
+        @Override
+        public void configure(final AuthorizationServerEndpointsConfigurer endpoints) {
+            endpoints
+                    .accessTokenConverter(accessTokenConverter())
+                    .authenticationManager(authenticationManager);
+        }
+
+        @Bean
+        JwtAccessTokenConverter accessTokenConverter() {
+            JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+            converter.setSigningKey(jwtSigningKey);
+            return converter;
+        }
+    }
+  learner_created: true
+- name: src/dartsgame/service/ResourceServerConfiguration.java
+  visible: true
+  learner_created: true
+- name: src/dartsgame/controller/ApiController.java
+  visible: true
+  text: |
+    package dartsgame.controller;
+
+    import com.fasterxml.jackson.core.JsonProcessingException;
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.PostMapping;
+    import org.springframework.web.bind.annotation.RestController;
+
+    import java.util.Map;
+
+    @RestController
+    public class GameController {
+        private final ObjectMapper mapper = new ObjectMapper();
+        private final Map<String, String> response = Map.of("status", "Under construction!");
+
+        @PostMapping("/create")
+        public String createGame() {
+            try {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @GetMapping("/list")
+        public String listGames() {
+            try {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @GetMapping("/join")
+        public String joinGame() {
+            try {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @GetMapping("/status")
+        public String gameStatus() {
+            try {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @PostMapping("/throws")
+        public String throwDart() {
+            try {
+                return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+  learner_created: true
+feedback_link: https://hyperskill.org/learn/step/17690#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Thu, 16 Mar 2023 17:31:14 UTC"
 record: -1

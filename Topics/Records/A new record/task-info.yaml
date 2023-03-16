@@ -1,0 +1,18 @@
+type: code
+files:
+- name: src/Main.java
+  visible: true
+  text: "import java.util.Scanner;\n\n//modify this Record\nrecord Person() {\n\n\
+    }\n\n//don't change the code below \nclass CheckRecord {\n    public static void\
+    \ main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n \
+    \       Person person = new Person(scanner.nextLine(), scanner.nextLine());\n\
+    \        System.out.println(person.name() + \" has the address: \" + person.address());\n\
+    \    }\n}"
+  learner_created: false
+feedback_link: https://hyperskill.org/learn/step/18333#comment
+status: Solved
+feedback:
+  message: <html>Correct solution</html>
+  time: "Mon, 27 Feb 2023 15:15:20 UTC"
+record: -1
+submission_language: java17

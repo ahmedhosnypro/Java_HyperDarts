@@ -1,0 +1,22 @@
+<h2>Application</h2>
+<p></p>
+<p>You have the following classes in your project:</p>
+<pre><code class="language-java">class User {
+    private long id;
+    private String name;
+    private String password;
+    private List&lt;Blog&gt; blogs
+
+    //constructors, getters, and setters
+}
+
+class Blog {
+    private long id;
+    private String name;
+    private User author;
+    private String content;
+
+    //constructors, getters, and setters
+}</code></pre>
+<p>Your client application works only with blogs, so it needs information only about the name of the blog author. So, your DTO should contain the string with the author's name instead of the <code class="language-java">User</code> class. Implement the <code class="language-java">BlogDTO</code> class with the help of the Java record. The types of fields must match the fields of domain objects.</p>
+<p>Note that your record can't have <code class="language-java">public</code> modifier in this task due to the testing specifics of the platform.</p><br><b>Sample Input:</b><br><pre><code class="language-no-highlight">No input.</code></pre><br><b>Sample Output:</b><br><pre><code class="language-no-highlight">Good job!</code></pre><br><br><br><font color="gray">Memory limit: 256 MB</font><br><font color="gray">Time limit: 5 seconds</font><br><br>

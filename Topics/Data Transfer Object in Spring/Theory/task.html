@@ -1,0 +1,145 @@
+<h2>Data Transfer Object in Spring</h2>
+<p>In application development, you can use many design patterns, one of which is <strong>DTO </strong>(<strong>Data Transfer Object</strong>). It is a simple object that usually has only fields with getters and setters and doesn't hold any business logic. The fundamental purpose of DTO is to provide the necessary data for transferring to another remote application.</p>
+<h5 id="why-use-special-objects-to-transfer-data">Why use special objects to transfer data?</h5>
+<p>This approach has the following advantages:</p>
+<ol>
+<li>
+<p>Decoupling business logic from the communication layer;</p>
+</li>
+<li>
+<p>Hiding unnecessary data or protecting sensitive information;</p>
+</li>
+<li>
+<p>Avoiding multiple calls to the remote server;</p>
+</li>
+<li>
+<p>Preventing API breaks during the update of the application model.</p>
+</li>
+</ol>
+<p>Let's elaborate on each of the points!</p>
+<p><strong>Decoupling</strong> is achieved through using different objects — entity for the business logic and DTO for the communication layer. Using decoupling, you help yourself and make the application architecture more flexible.</p>
+<p>The second DTO advantage is no less important for you as a developer. You may want to hide some information in the database from the client application for security reasons or redundancy. For this, you can use DTO as a filter that will pass only the data you choose. As you can see in our example below, the domain object has multiple fields. We "filter" them to only four fields with DTO and limit client application access to other sensitive fields.</p>
+<p><img alt="" height="729" name="2.svg" src="https://ucarecdn.com/a3d7821e-b1f2-43be-948e-08fab1dcfa50/" width="1474"/></p>
+<p>At the same time, you can also use DTO to combine fields from different domain objects. It helps reduce client calls and pass all data in one shot. The example below shows two separate entities for blogs and authors. We create the <code class="language-java">BlogDTO</code> object with all the necessary data for the client application.</p>
+<p><img alt="" height="1204" name="1-2.svg" src="https://ucarecdn.com/6263ac4f-3172-4ce0-af9a-025d81f63479/" width="1474"/></p>
+<p>As you may have guessed, this DTO pattern also allows us to keep the API contract unchanged when pushing only internal changes to the domain model.</p>
+<p> </p>
+<p></p><div class="alert alert-primary">
+<p><strong>The API contract</strong> is a document that describes how the API works. The contract should reflect any changes to the API to avoid unexpected behavior from clients that consume it. As an API provider, if you change the connection protocol, the client app won't work. For this reason, any API changes should be communicated and documented. For more details about designing API in practice, you can explore <a href="https://swagger.io" rel="noopener noreferrer nofollow" target="_blank">Swagger</a> tools.</p>
+<p></p></div>
+<p> </p>
+<h5 id="implementation-mappers">Implementation: mappers</h5>
+<p>The DTO pattern implementation has three core items:</p>
+<ul>
+<li>
+<p>Domain object</p>
+</li>
+<li>
+<p>DTO object</p>
+</li>
+<li>
+<p>Mapper</p>
+</li>
+</ul>
+<p>We have already discussed the domain and DTO objects. When it comes to a <strong>mapper</strong>, it's a function that takes DTO as input and produces a domain object as output or in reverse. You can write a mapper manually or take an auto-mapper from the library. Let's learn how to do it with an example. Suppose you have the following domain object as your user:</p>
+<pre><code class="language-java">public class User {
+    private int id;
+    private String name;
+    private String email;
+    private LocalDate accountCreatedAt;
+
+    // constructors, getters and setters
+}</code></pre>
+<p>You will find out the date of account creation on the server side, and the client application doesn't need this information. So our DTO will look like this:</p>
+<pre><code class="language-java">public class UserDTO {
+    private int id;
+    private String name;
+    private String email;
+
+    // constructors, getters, and setters
+}</code></pre>
+<p>First, we will learn how to implement the methods for mapping manually. It's pretty straightforward: we just need to create a new object and set its fields in compliance with the domain object:</p>
+<pre><code class="language-java">UserDTO convertUserToDTO(User user) {
+    UserDTO dto = new UserDTO(user.getId(), user.getName(), user.getEmail());
+    return dto;
+}</code></pre>
+<p>It makes sense to implement the methods of conversion in the business layer of your application because they may contain some logic. To convert <code class="language-java">UserDTO</code> to <code class="language-java">User</code> you need to get some additional information:</p>
+<pre><code class="language-java">User convertDTOToUser(UserDTO dto) {
+    User user = new User(dto.getId(), dto.getName(), dto.getEmail(), null);
+    user.setAccountCreatedAt(LocalDate.now());
+    return user;
+}</code></pre>
+<p>It's more convenient to use the <a href="http://modelmapper.org/" rel="noopener noreferrer nofollow" target="_blank">ModelMapper</a> library, which can be added to the project as follows:</p>
+<details><summary>Gradle</summary>
+<pre><code class="language-java">dependencies {
+    implementation 'org.modelmapper:modelmapper:3.1.0'
+}   </code></pre>
+</details>
+<details><summary>Maven</summary>
+<pre><code class="language-xml">&lt;dependency&gt;
+  &lt;groupId&gt;org.modelmapper&lt;/groupId&gt;
+  &lt;artifactId&gt;modelmapper&lt;/artifactId&gt;
+  &lt;version&gt;3.1.0&lt;/version&gt;
+&lt;/dependency&gt; </code></pre>
+</details>
+<p>After that, you can declare the mapper from the library as a Spring Bean to inject it into our service:</p>
+<pre><code class="language-java">@Bean
+public ModelMapper modelMapper() {
+    return new ModelMapper();
+}</code></pre>
+<p>Then you need to add the mapper to the service constructor:</p>
+<pre><code class="language-java">public UserService(UserRepository peopleRepository, ModelMapper modelMapper) {
+    this.userRepository = userRepository;
+    this.modelMapper = modelMapper;
+}</code></pre>
+<p>And now your mapper is ready to use! Let's implement our methods with it:</p>
+<pre><code class="language-java">UserDTO convertUserToDTO(User user) {
+    UserDTO dto = modelMapper.map(user, UserDTO.class);
+    return dto;
+}
+
+User convertDTOToUser(UserDTO dto) {
+    User user = modelMapper.map(dto, User.class);
+    user.setAccountCreatedAt(LocalDate.now());
+    return user;
+}</code></pre>
+<p>Your DTO should have an empty constructor, getters, and setters for each field to make everything work fine. All conversion happens automatically without any specific configuration because all required fields in <code class="language-java">UserDTO</code> have the same name in the <code class="language-java">User</code> class. In a more complex case, you can always configure the <code class="language-java">ModelMapper</code> instance.</p>
+<h5 id="lombok-vs-java-record">Lombok vs. Java record</h5>
+<p>Since Java is a very verbose language, especially for simple classes like DTO, <a href="https://projectlombok.org/" rel="noopener noreferrer nofollow" target="_blank">Project Lombok</a> has become very popular. This library gives you annotations for auto-generating constructors, getters, and setters, so you don't have to write them in your code. Lombok reduces boilerplate code, but you need to be cautious while working with some parts of it. For example, you should be careful with JPA entities because <code class="language-java">@EqualsAndHashCode</code> can break the <code class="language-java">HashSet</code> and <code class="language-java">HashMap</code> usage. So, using Lombok is quite divisive and usually depends on the team conventions. The DTO from the example above will look like this with Lombok:</p>
+<pre><code class="language-java">@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class UserDTO {
+    private int id;
+    private String username;
+    private LocalDate dateOfBirth;
+}</code></pre>
+<p><strong>Records</strong> were introduced in JDK 14 only as a preview feature and finalized in JDK 16. Records provide a convenient way to declare immutable classes. The same <code class="language-java">User</code> as before, but now as a record, will look like this:</p>
+<pre><code class="language-java">public record UserDTO(int id, String username, LocalDate dateOfBirth) {
+}</code></pre>
+<p>These two lines of code provide:</p>
+<ul>
+<li>
+<p>a private final field for each property</p>
+</li>
+<li>
+<p>a getter for each field</p>
+</li>
+<li>
+<p>a public constructor with all arguments</p>
+</li>
+<li>
+<p><code class="language-java">equals</code></p>
+</li>
+<li>
+<p><code class="language-java">hashCode</code></p>
+</li>
+<li>
+<p><code class="language-java">toString</code></p>
+</li>
+</ul>
+<p>There is no straight answer to which is better to use, Java record or Lombok. Lombok has some features of Java records. With Lombok, you can configure specific access levels of constructors or fields. It can implement a builder pattern, which can be preferable when we have many fields. Nevertheless, you might want to use Java records for simple and immutable objects.</p>
+<p>It's essential to notice that the DTO pattern implementation doesn't require using Java records, Lombok, ModelMapper, or any other library. These tools only reduce the amount of manual work done by the programmer. A simple Java POJO with manual mapping of the necessary fields will do as well.</p>
+<h5 id="conclusion">Conclusion</h5>
+<p>DTO is a convenient way of organizing data for the client. If you expect considerable and fast codebase growth, it will help protect the application from breaking updates on the client. DTO can be very useful and handy for a complex domain model. Data transfer objects can hide unnecessary or sensitive fields and aggregate multiple entities into one object. You can use Lombok to reduce boilerplate code in your DTO classes or use records with newer versions of Java.</p>
